@@ -15,6 +15,8 @@ import email
 # https://stackoverflow.com/questions/1692388/python-list-of-dict-if-exists-increment-a-dict-value-if-not-append-a-new-dic
 from collections import defaultdict
 
+import mysql.connector
+
 from pprint import pprint
 
 # If modifying these scopes, delete the file token.pickle.
@@ -23,6 +25,8 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 def get_message_header(service, user_id, message, header_name):
     msg_id = message['id']
     msg = service.users().messages().get(userId=user_id, id=msg_id).execute()
+    pprint(msg)
+    quit()
     payload = msg['payload']
     headers = payload['headers']
 
@@ -58,6 +62,20 @@ def main():
 
     service = build('gmail', 'v1', credentials=creds)
 
+    DBHOST = os.getenv('DBHOST')
+    DBNAME = os.getenv('DBNAME')
+    DBUSER = os.getenv('DBUSER')
+    DBPASS = os.getenv('DBPASS')
+    DBPORT = os.getenv('DBPORT')
+    dbh = mysql.connector.connect(
+        host=DBHOST,
+        database=DBNAME,
+        user=DBUSER,
+        passwd=DBPASS,
+        port=int(DBPORT)
+    )
+    print("MYSQL CONNECTED")
+
     # List All Messages
     # https://developers.google.com/gmail/api/v1/reference/users/messages/list#examples
     user_id = 'me'
@@ -71,7 +89,10 @@ def main():
             # print(response['messages'])
             for message in response['messages']:
                 from_header = get_message_header(service, user_id, message, 'From')
-                print(from_header)
+
+                # TODO: Get message "info" here (From header, message_id, thread_id, sizeEstimate)
+                # TODO: Insert into MySQL if not already there
+                print(message['id'], from_header)
                 from_values[from_header] += 1
 
             messages.extend(response['messages'])
@@ -84,7 +105,9 @@ def main():
             messages.extend(response['messages'])
             for message in response['messages']:
                 from_header = get_message_header(service, user_id, message, 'From')
-                print(from_header)
+                # TODO: Get message "info" here (From header, message_id, thread_id, sizeEstimate)
+                # TODO: Insert into MySQL if not already there
+                print(message['id'], from_header)
                 from_values[from_header] += 1
 
         return messages
