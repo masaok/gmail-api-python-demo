@@ -183,7 +183,7 @@ def main():
         if 'messages' in response:
             # print(response['messages'])
             for message in response['messages']:
-                msg_info = process_message(service, user_id, message)
+                process_message(service, user_id, message)
 
         while 'nextPageToken' in response:
             log.info("NEXT PAGE")
@@ -191,7 +191,7 @@ def main():
             response = service.users().messages().list(userId='me', q=query,
                                                 pageToken=page_token).execute()
             for message in response['messages']:
-                msg_info = process_message(service, user_id, message)
+                process_message(service, user_id, message)
 
     except errors.HttpError as error:
         print('An error occurred: %s' % error)
