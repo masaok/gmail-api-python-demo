@@ -12,7 +12,7 @@
 % ./quickstart.py
 ```
 
-## List Messages
+## List Messages and Insert into Database for Analysis
 
 1. Copy and edit `env.sample.sh` with MySQL credentials
 
@@ -25,7 +25,16 @@
 1. Run the script
 
    ```
-   % ./quickstart.py
+   % ./list_emails.py
+   ```
+   
+## Delete Old Emails
+
+1. Create credentials above.
+1. Run the script
+
+   ```
+   % ./delete_old_emails.py
    ```
 
 ## How to Change Email Addresses
