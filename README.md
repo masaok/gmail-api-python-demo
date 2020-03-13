@@ -15,3 +15,9 @@
 ## How to Change Email Addresses
 
 Remove the `token.pickle` and rerun the script
+
+## Coming soon...
+
+App verification (so we can delete/trash emails):
+
+https://support.google.com/cloud/answer/7454865
