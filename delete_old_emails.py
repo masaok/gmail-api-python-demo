@@ -17,7 +17,17 @@ from collections import defaultdict
 
 import mysql.connector
 
+import logging
+import time
 from pprint import pprint
+from pprint import pformat
+
+# Initialize logging
+logging.basicConfig(format='%(asctime)s %(levelname)s [%(filename)s:%(lineno)4d %(funcName)s] %(message)s',
+                    datefmt='%Y-%m-%d:%H:%M:%S',
+                    level=logging.INFO)
+
+log = logging.getLogger(__name__)
 
 # If modifying these scopes, delete the file token.pickle.
 # https://developers.google.com/gmail/api/auth/scopes
@@ -68,10 +78,17 @@ def get_message_header(msg, header_name):
 
     return header_value
 
-def get_message_info(service, user_id, message, header_name):
+def get_message_info(service, user_id, message):
     result = {}
     msg_id = message['id']
-    msg = service.users().messages().get(userId=user_id, id=msg_id).execute()
+
+    for i in range(3):
+        try:
+            msg = service.users().messages().get(userId=user_id, id=msg_id).execute()
+        except Exception as error:
+            log.info(error)
+            time.sleep(1)
+    
     # pprint(msg)
 
     # print(from_header)
@@ -83,6 +100,17 @@ def get_message_info(service, user_id, message, header_name):
     result['size_estimate'] = get_size_estimate(msg)
     result['thread_id'] = get_thread_id(msg)
     return result
+
+def process_message(service, user_id, message):
+    msg_info = get_message_info(service, user_id, message)
+    msg_id = message['id']
+    msg_info['message_id'] = msg_id
+    pprint(msg_info)
+
+    service.users().messages().delete(userId=user_id, id=message['id']).execute()
+    log.info(message['id'] + " deleted.")
+
+    return msg_info
 
 def main():
     """Shows basic usage of the Gmail API.
@@ -138,35 +166,21 @@ def main():
         if 'messages' in response:
             # print(response['messages'])
             for message in response['messages']:
-
-                # TODO: refactor into process_message function
-
-                # Get message "info" here (From header, thread_id, sizeEstimate)
-                msg_info = get_message_info(service, user_id, message, 'From')
-                msg_id = message['id']
-                msg_info['message_id'] = msg_id
-                pprint(msg_info)
-
-                service.users().messages().delete(userId=user_id, id=message['id']).execute()
-                print(message['id'], "deleted.")
+                msg_info = process_message(service, user_id, message)
                 counter['deleted'] += 1
                 counter['deleted_bytes'] += msg_info['size_estimate']
+                log.info(pformat(dict(counter)))
 
         while 'nextPageToken' in response:
-            print("NEXT PAGE")
+            log.info("NEXT PAGE")
             page_token = response['nextPageToken']
             response = service.users().messages().list(userId='me', q=query,
                                                 pageToken=page_token).execute()
             for message in response['messages']:
-                msg_info = get_message_info(service, user_id, message, 'From')
-                msg_id = message['id']
-                msg_info['message_id'] = msg_id
-                pprint(msg_info)
-
-                service.users().messages().delete(userId=user_id, id=message['id']).execute()
-                print(message['id'], "deleted.")
+                msg_info = process_message(service, user_id, message)
                 counter['deleted'] += 1
                 counter['deleted_bytes'] += msg_info['size_estimate']
+                log.info(pformat(dict(counter)))
 
     except errors.HttpError as error:
         print('An error occurred: %s' % error)
