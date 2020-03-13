@@ -46,3 +46,5 @@ Remove the `token.pickle` and rerun the script
 App verification (so we can delete/trash emails):
 
 https://support.google.com/cloud/answer/7454865
+
+https://console.developers.google.com/apis/credentials/consent?project=striped-botany-271007
