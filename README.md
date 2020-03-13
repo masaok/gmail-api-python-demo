@@ -16,17 +16,17 @@
 
 1. Copy and edit `env.sample.sh` with MySQL credentials
 
-```
-cp env.samples.sh env.sh
-vim env.sh
-source env.sh
-```
+   ```
+   cp env.samples.sh env.sh
+   vim env.sh
+   source env.sh
+   ```
 
 1. Run the script
 
-```
-% ./quickstart.py
-```
+   ```
+   % ./quickstart.py
+   ```
 
 ## How to Change Email Addresses
 
