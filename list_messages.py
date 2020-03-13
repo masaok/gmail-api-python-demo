@@ -124,6 +124,7 @@ def main():
     from_values = defaultdict(int)
     try:
         # TODO: Select all current message in the database, then skip existing messages
+        # TODO: Convert email date to MySQL and insert/update in database
 
         # Fetch the first page of messages
         response = service.users().messages().list(userId='me',
