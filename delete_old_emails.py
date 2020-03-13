@@ -36,6 +36,9 @@ SCOPES = [
     'https://mail.google.com/'
 ]
 
+# Globals
+counter = defaultdict(int)
+
 def insert_run(dbh, counter):
     sql = "\
         INSERT INTO `run` \
@@ -79,13 +82,16 @@ def get_message_header(msg, header_name):
     return header_value
 
 def get_message_info(service, user_id, message):
+    global counter
     result = {}
     msg_id = message['id']
 
     for i in range(3):
         try:
             msg = service.users().messages().get(userId=user_id, id=msg_id).execute()
+            break
         except Exception as error:
+            counter['retries'] += 1
             log.info(error)
             time.sleep(1)
     
@@ -102,6 +108,7 @@ def get_message_info(service, user_id, message):
     return result
 
 def process_message(service, user_id, message):
+    global counter
     msg_info = get_message_info(service, user_id, message)
     msg_id = message['id']
     msg_info['message_id'] = msg_id
@@ -109,6 +116,10 @@ def process_message(service, user_id, message):
 
     service.users().messages().delete(userId=user_id, id=message['id']).execute()
     log.info(message['id'] + " deleted.")
+
+    counter['deleted'] += 1
+    counter['deleted_bytes'] += msg_info['size_estimate']
+    log.info(pformat(dict(counter)))
 
     return msg_info
 
@@ -158,7 +169,6 @@ def main():
     query = 'category:social OR category:updates OR category:promotions older_than:' + older_than
 
     # https://stackoverflow.com/questions/1692388/python-list-of-dict-if-exists-increment-a-dict-value-if-not-append-a-new-dic
-    counter = defaultdict(int)
     try:
         # Fetch the first page of messages
         response = service.users().messages().list(userId=user_id,
@@ -167,9 +177,6 @@ def main():
             # print(response['messages'])
             for message in response['messages']:
                 msg_info = process_message(service, user_id, message)
-                counter['deleted'] += 1
-                counter['deleted_bytes'] += msg_info['size_estimate']
-                log.info(pformat(dict(counter)))
 
         while 'nextPageToken' in response:
             log.info("NEXT PAGE")
@@ -178,9 +185,6 @@ def main():
                                                 pageToken=page_token).execute()
             for message in response['messages']:
                 msg_info = process_message(service, user_id, message)
-                counter['deleted'] += 1
-                counter['deleted_bytes'] += msg_info['size_estimate']
-                log.info(pformat(dict(counter)))
 
     except errors.HttpError as error:
         print('An error occurred: %s' % error)
