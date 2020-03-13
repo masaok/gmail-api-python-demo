@@ -20,7 +20,11 @@ import mysql.connector
 from pprint import pprint
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+# https://developers.google.com/gmail/api/auth/scopes
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://mail.google.com/'
+]
 
 def insert(dbh, msg_info):
     sql = "\
