@@ -8,9 +8,9 @@
 
 1. Run the script
 
-```
-% ./quickstart.py
-```
+   ```
+   % ./quickstart.py
+   ```
 
 ## List Messages and Insert into Database for Analysis
 
