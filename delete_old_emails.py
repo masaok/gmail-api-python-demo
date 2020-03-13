@@ -26,31 +26,6 @@ SCOPES = [
     'https://mail.google.com/'
 ]
 
-def insert(dbh, msg_info):
-    sql = "\
-        INSERT INTO `message` \
-        SET gmail_message_id = %s \
-          , gmail_thread_id = %s \
-          , size_estimate = %s \
-          , from_header_value = %s \
-        ON DUPLICATE KEY UPDATE updated = NOW() \
-    "
-
-    pprint(msg_info)
-    values = (
-        msg_info['message_id']
-      , msg_info['thread_id']
-      , msg_info['size_estimate']
-      , msg_info['from']
-    )
-    print(sql)
-    sth = dbh.cursor(dictionary=True)
-    sth.execute(sql, values)
-    dbh.commit()
-    print(sth.rowcount, "record inserted.")
-    insert_id = sth.lastrowid
-    return insert_id
-
 def get_size_estimate(msg):
     return msg['sizeEstimate']
 
@@ -109,24 +84,13 @@ def main():
 
     service = build('gmail', 'v1', credentials=creds)
 
-    DBHOST = os.getenv('DBHOST')
-    DBNAME = os.getenv('DBNAME')
-    DBUSER = os.getenv('DBUSER')
-    DBPASS = os.getenv('DBPASS')
-    DBPORT = os.getenv('DBPORT')
-    dbh = mysql.connector.connect(
-        host=DBHOST,
-        database=DBNAME,
-        user=DBUSER,
-        passwd=DBPASS,
-        port=int(DBPORT)
-    )
-    print("MYSQL CONNECTED")
-
     # Find old messages for trashing
     # https://developers.google.com/gmail/api/v1/reference/users/messages/list#examples
     user_id = 'me'
-    query = 'category:social OR category:updates OR category:promotions older_than:1m'
+    query = 'category:social OR category:updates OR category:promotions older_than:2m'
+
+    # https://stackoverflow.com/questions/1692388/python-list-of-dict-if-exists-increment-a-dict-value-if-not-append-a-new-dic
+    counter = defaultdict(int)
     try:
         # Fetch the first page of messages
         response = service.users().messages().list(userId=user_id,
@@ -141,16 +105,11 @@ def main():
                 msg_id = message['id']
                 msg_info['message_id'] = msg_id
                 pprint(msg_info)
-                # quit()
-
-                # # Insert into MySQL if not already there
-                # insert_id = insert(dbh, msg_info)
-                # print(insert_id)
 
                 service.users().messages().delete(userId=user_id, id=message['id']).execute()
                 print(message['id'], "deleted.")
-
-        quit()
+                counter['deleted'] += 1
+                counter['deleted_bytes'] += msg_info['size_estimate']
 
         while 'nextPageToken' in response:
             print("NEXT PAGE")
@@ -163,11 +122,15 @@ def main():
                 msg_info['message_id'] = msg_id
                 pprint(msg_info)
 
-                # Insert into MySQL if not already there
-                insert_id = insert(dbh, msg_info)
-                print(insert_id)
+                service.users().messages().delete(userId=user_id, id=message['id']).execute()
+                print(message['id'], "deleted.")
+                counter['deleted'] += 1
+                counter['deleted_bytes'] += msg_info['size_estimate']
+
     except errors.HttpError as error:
         print('An error occurred: %s' % error)
+
+    pprint(counter)
 
     
 
