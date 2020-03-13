@@ -22,11 +22,38 @@ from pprint import pprint
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
-def get_message_header(service, user_id, message, header_name):
-    msg_id = message['id']
-    msg = service.users().messages().get(userId=user_id, id=msg_id).execute()
-    pprint(msg)
-    quit()
+def insert(dbh, msg_info):
+    sql = "\
+        INSERT INTO `message` \
+        SET gmail_message_id = %s \
+          , gmail_thread_id = %s \
+          , size_estimate = %s \
+          , from_header_value = %s \
+        ON DUPLICATE KEY UPDATE updated = NOW() \
+    "
+
+    pprint(msg_info)
+    values = (
+        msg_info['message_id']
+      , msg_info['thread_id']
+      , msg_info['size_estimate']
+      , msg_info['from']
+    )
+    print(sql)
+    sth = dbh.cursor(dictionary=True)
+    sth.execute(sql, values)
+    dbh.commit()
+    print(sth.rowcount, "record inserted.")
+    insert_id = sth.lastrowid
+    return insert_id
+
+def get_size_estimate(msg):
+    return msg['sizeEstimate']
+
+def get_thread_id(msg):
+    return msg['threadId']
+
+def get_message_header(msg, header_name):
     payload = msg['payload']
     headers = payload['headers']
 
@@ -36,6 +63,20 @@ def get_message_header(service, user_id, message, header_name):
             header_value = header['value']
 
     return header_value
+
+def get_message_info(service, user_id, message, header_name):
+    result = {}
+    msg_id = message['id']
+    msg = service.users().messages().get(userId=user_id, id=msg_id).execute()
+    # pprint(msg)
+
+    from_header = get_message_header(msg, 'From')
+    # print(from_header)
+
+    result['from'] = from_header
+    result['size_estimate'] = get_size_estimate(msg)
+    result['thread_id'] = get_thread_id(msg)
+    return result
 
 def main():
     """Shows basic usage of the Gmail API.
@@ -82,35 +123,40 @@ def main():
     query = ''
     from_values = defaultdict(int)
     try:
+        # TODO: Select all current message in the database, then skip existing messages
+
+        # Fetch the first page of messages
         response = service.users().messages().list(userId='me',
                                                 q='').execute()
-        messages = []
         if 'messages' in response:
             # print(response['messages'])
             for message in response['messages']:
-                from_header = get_message_header(service, user_id, message, 'From')
 
-                # TODO: Get message "info" here (From header, message_id, thread_id, sizeEstimate)
-                # TODO: Insert into MySQL if not already there
-                print(message['id'], from_header)
-                from_values[from_header] += 1
 
-            messages.extend(response['messages'])
+                # Get message "info" here (From header, thread_id, sizeEstimate)
+                msg_info = get_message_info(service, user_id, message, 'From')
+                msg_id = message['id']
+                msg_info['message_id'] = msg_id
+                pprint(msg_info)
+
+                # Insert into MySQL if not already there
+                insert_id = insert(dbh, msg_info)
+                print(insert_id)
 
         while 'nextPageToken' in response:
             print("NEXT PAGE")
             page_token = response['nextPageToken']
             response = service.users().messages().list(userId='me', q='',
                                                 pageToken=page_token).execute()
-            messages.extend(response['messages'])
             for message in response['messages']:
-                from_header = get_message_header(service, user_id, message, 'From')
-                # TODO: Get message "info" here (From header, message_id, thread_id, sizeEstimate)
-                # TODO: Insert into MySQL if not already there
-                print(message['id'], from_header)
-                from_values[from_header] += 1
+                msg_info = get_message_info(service, user_id, message, 'From')
+                msg_id = message['id']
+                msg_info['message_id'] = msg_id
+                pprint(msg_info)
 
-        return messages
+                # Insert into MySQL if not already there
+                insert_id = insert(dbh, msg_info)
+                print(insert_id)
     except errors.HttpError as error:
         print('An error occurred: %s' % error)
 
