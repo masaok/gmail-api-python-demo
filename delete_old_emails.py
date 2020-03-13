@@ -26,6 +26,31 @@ SCOPES = [
     'https://mail.google.com/'
 ]
 
+def insert_run(dbh, counter):
+    sql = "\
+        INSERT INTO `run` \
+        SET query = %s \
+          , older_than = %s \
+          , bytes_deleted = %s \
+          , messages_deleted = %s \
+        ON DUPLICATE KEY UPDATE updated = NOW() \
+    "
+
+    pprint(counter)
+    values = (
+        counter['query']
+      , counter['older_than']
+      , counter['deleted_bytes']
+      , counter['deleted']
+    )
+    print(sql)
+    sth = dbh.cursor(dictionary=True)
+    sth.execute(sql, values)
+    dbh.commit()
+    print(sth.rowcount, "record inserted.")
+    insert_id = sth.lastrowid
+    return insert_id
+
 def get_size_estimate(msg):
     return msg['sizeEstimate']
 
@@ -84,10 +109,25 @@ def main():
 
     service = build('gmail', 'v1', credentials=creds)
 
+    DBHOST = os.getenv('DBHOST')
+    DBNAME = os.getenv('DBNAME')
+    DBUSER = os.getenv('DBUSER')
+    DBPASS = os.getenv('DBPASS')
+    DBPORT = os.getenv('DBPORT')
+    dbh = mysql.connector.connect(
+        host=DBHOST,
+        database=DBNAME,
+        user=DBUSER,
+        passwd=DBPASS,
+        port=int(DBPORT)
+    )
+    print("MYSQL CONNECTED")
+
     # Find old messages for trashing
     # https://developers.google.com/gmail/api/v1/reference/users/messages/list#examples
     user_id = 'me'
-    query = 'category:social OR category:updates OR category:promotions older_than:2m'
+    older_than = '2m'
+    query = 'category:social OR category:updates OR category:promotions older_than:' + older_than
 
     # https://stackoverflow.com/questions/1692388/python-list-of-dict-if-exists-increment-a-dict-value-if-not-append-a-new-dic
     counter = defaultdict(int)
@@ -99,6 +139,7 @@ def main():
             # print(response['messages'])
             for message in response['messages']:
 
+                # TODO: refactor into process_message function
 
                 # Get message "info" here (From header, thread_id, sizeEstimate)
                 msg_info = get_message_info(service, user_id, message, 'From')
@@ -130,7 +171,10 @@ def main():
     except errors.HttpError as error:
         print('An error occurred: %s' % error)
 
+    counter['query'] = query
+    counter['older_than'] = older_than
     pprint(counter)
+    insert_run(dbh, counter)
 
     
 
