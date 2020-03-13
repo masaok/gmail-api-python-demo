@@ -1,13 +1,3 @@
-## Coming soon...
-
-App verification (so we can delete/trash emails):
-
-https://support.google.com/cloud/answer/7454865
-
-https://console.developers.google.com/apis/credentials/consent?project=striped-botany-271007
-
-TODO: https://support.google.com/cloud/answer/9110914?hl=en#how-smooth
-
 ## Quickstart
 
 1. Create a `credentials.json` file in this directory via this URL:
