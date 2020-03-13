@@ -92,7 +92,7 @@ def get_message_info(service, user_id, message):
             break
         except Exception as error:
             counter['retries'] += 1
-            log.info(error)
+            log.info(i + ": " + error)
             time.sleep(1)
     
     # pprint(msg)
@@ -114,8 +114,15 @@ def process_message(service, user_id, message):
     msg_info['message_id'] = msg_id
     pprint(msg_info)
 
-    service.users().messages().delete(userId=user_id, id=message['id']).execute()
-    log.info(message['id'] + " deleted.")
+    for i in range(3):
+        try:
+            service.users().messages().delete(userId=user_id, id=message['id']).execute()
+            log.info(message['id'] + " deleted.")
+            break
+        except Exception as error:
+            counter['retries'] += 1
+            log.info(i + ": " + error)
+            time.sleep(1)
 
     counter['deleted'] += 1
     counter['deleted_bytes'] += msg_info['size_estimate']
@@ -192,6 +199,8 @@ def main():
     counter['query'] = query
     counter['older_than'] = older_than
     pprint(counter)
+
+    # TODO: make dbh global, so even on error, it will still insert as a run
     insert_run(dbh, counter)
 
     
