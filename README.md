@@ -5,9 +5,9 @@
    ```
    python3 -m venv env
    source env/bin/activate
-   source env/Scripts/Activate (Windows)
-   pip3 install -r requirements.txt
-   pip3 freeze > requirements.txt
+   source env/Scripts/Activate       # Windows
+   pip3 install -r requirements.txt  # install from requirements
+   pip3 freeze > requirements.txt    # save requirements
    deactivate
    ```
 
