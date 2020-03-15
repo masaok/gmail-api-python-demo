@@ -3,6 +3,7 @@
 from __future__ import print_function
 import pickle
 import os.path
+import sys
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -99,9 +100,9 @@ def get_message_info(service, user_id, message):
 
     # print(from_header)
 
-    result['from'] = get_message_header(msg, 'From')
+    result['from'] = get_message_header(msg, 'From').encode('utf8')
     result['to'] = get_message_header(msg, 'To')
-    result['subject'] = get_message_header(msg, 'Subject')
+    result['subject'] = get_message_header(msg, 'Subject').encode('utf8')
     result['date'] = get_message_header(msg, 'Date')
     result['size_estimate'] = get_size_estimate(msg)
     result['thread_id'] = get_thread_id(msg)
@@ -113,6 +114,7 @@ def process_message(service, user_id, message):
     msg_id = message['id']
     msg_info['message_id'] = msg_id
     pprint(msg_info)
+    sys.stdout.flush()
 
     for i in range(3):
         try:
@@ -121,7 +123,7 @@ def process_message(service, user_id, message):
             break
         except Exception as error:
             counter['retries'] += 1
-            log.info(i + ": " + error)
+            log.info(str(i) + ": " + error)
             time.sleep(1)
 
     counter['deleted'] += 1
