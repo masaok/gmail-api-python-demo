@@ -65,4 +65,6 @@ Remove the `token.pickle` and rerun the script
 
 ## References
 
+### Gmail API Reference
+
 - https://developers.google.com/gmail/api/v1/reference/users/messages/list
