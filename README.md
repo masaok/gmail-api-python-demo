@@ -19,6 +19,11 @@
 1. Install Python libraries via pip (also on the quickstart page)
 
    https://developers.google.com/gmail/api/quickstart/python#step_2_install_the_google_client_library
+   
+   ```
+   pip install mysql-connector-python
+   pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+   ```
 
 1. Run the script
 
