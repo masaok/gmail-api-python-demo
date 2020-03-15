@@ -1,10 +1,29 @@
 ## Quickstart
 
-1. Create a `credentials.json` file in this directory via this URL:
+1. Setup Python virtual environment
+
+   ```
+   python3 -m venv env
+   source env/bin/activate
+   deactivate
+   ```
+
+1. Create a `credentials.json` file in the repo redirectory via the Google Cloud Console:
+
+   https://console.cloud.google.com/apis/credentials
+   
+   ...as instructed by the quickstart:
 
    https://developers.google.com/gmail/api/quickstart/python
 
 1. Install Python libraries via pip (also on the quickstart page)
+
+   https://developers.google.com/gmail/api/quickstart/python#step_2_install_the_google_client_library
+   
+   ```
+   pip install mysql-connector-python
+   pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+   ```
 
 1. Run the script
 
