@@ -1,5 +1,13 @@
 ## Quickstart
 
+1. Setup Python virtual environment
+
+   ```
+   python3 -m venv env
+   source env/bin/activate
+   deactivate
+   ```
+
 1. Create a `credentials.json` file in this directory via this URL:
 
    https://developers.google.com/gmail/api/quickstart/python
