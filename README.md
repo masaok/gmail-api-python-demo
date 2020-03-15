@@ -6,6 +6,8 @@
 
 1. Install Python libraries via pip (also on the quickstart page)
 
+   https://developers.google.com/gmail/api/quickstart/python#step_2_install_the_google_client_library
+
 1. Run the script
 
    ```
