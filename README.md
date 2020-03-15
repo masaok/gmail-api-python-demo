@@ -8,7 +8,11 @@
    deactivate
    ```
 
-1. Create a `credentials.json` file in this directory via this URL:
+1. Create a `credentials.json` file in the repo redirectory via the Google Cloud Console:
+
+   https://console.cloud.google.com/apis/credentials
+   
+   ...as instructed by the quickstart:
 
    https://developers.google.com/gmail/api/quickstart/python
 
